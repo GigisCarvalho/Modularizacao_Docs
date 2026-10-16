@@ -1,0 +1,8 @@
+# Dependências
+node_modules/
+
+# Build
+dist/
+
+# Cache do Angular
+.angular/

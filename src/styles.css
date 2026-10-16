@@ -1,0 +1,54 @@
+/*
+  ESTILOS GLOBAIS (valem para a aplicação inteira)
+  ------------------------------------------------
+  As cores ficam em variáveis (--nome). O componente usa SOMENTE estas variáveis.
+  Assim, para o modo escuro basta trocar os valores quando <html data-theme="dark">.
+*/
+
+/* ===== Modo claro (padrão) ===== */
+:root {
+  --bg: #f6f3fc;            /* fundo da página */
+  --surface: #ffffff;       /* fundo dos cartões e do menu */
+  --surface-2: #f3eefc;     /* fundo de caixas de destaque */
+  --hover: #e9e0fb;         /* fundo ao passar o mouse */
+  --text: #111111;          /* texto principal */
+  --muted: #625c70;         /* texto secundário */
+  --line: #e4dcf3;          /* bordas */
+  --accent: #7c3aed;        /* roxo principal */
+  --accent-strong: #4c1d95; /* roxo escuro (botões do menu) */
+  --accent-soft: #ddd0fb;   /* lilás claro */
+  --code-bg: #14101f;       /* fundo do código */
+  --code-text: #ece6fb;     /* texto do código */
+  --header-bg: #ffffff;     /* fundo do cabeçalho */
+  --get-bg: #ddd0fb;        /* fundo do selo GET */
+  --get-text: #4c1d95;      /* texto do selo GET */
+
+  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+/* ===== Modo escuro ===== */
+[data-theme='dark'] {
+  --bg: #0b0910;
+  --surface: #15111d;
+  --surface-2: #1d1729;
+  --hover: #2a2140;
+  --text: #f2eefb;
+  --muted: #a69fb8;
+  --line: #2c2440;
+  --accent: #a78bfa;
+  --accent-strong: #5b21b6;
+  --accent-soft: #3b2a63;
+  --code-bg: #000000;
+  --code-text: #e9e2ff;
+  --header-bg: #000000;
+  --get-bg: #6d4fc2;        /* roxo médio: contrasta com o fundo escuro */
+  --get-text: #ffffff;      /* texto branco para ficar legível */
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; transition: background .2s, color .2s; }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+code, pre { font-family: Consolas, 'Courier New', monospace; }

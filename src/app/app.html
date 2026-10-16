@@ -1,0 +1,205 @@
+<!--
+  TEMPLATE (o que aparece na tela)
+  - Chaves duplas mostram um valor do app.ts na tela.
+  - (click)="f()" chama uma função ao clicar.
+  - [class.x]="cond" adiciona a classe CSS x quando cond for verdadeira.
+  - Os blocos if, else e for (com arroba na frente) são condição e repetição.
+-->
+
+<!-- ===== CABEÇALHO ===== -->
+<header class="header">
+  <button class="menu-button" (click)="menuOpen.set(!menuOpen())">☰</button>
+
+  <button class="brand" (click)="select('home')">
+    <span class="brand-logo">M</span>
+    <span>Modularização <strong>API</strong></span>
+  </button>
+
+  <!-- Botão de tema, alinhado à direita pelo CSS (margin-left: auto) -->
+  <button class="theme-button" (click)="toggleTheme()">
+    {{ theme() === 'light' ? 'Modo escuro' : 'Modo claro' }}
+  </button>
+</header>
+
+<!-- ===== MENU LATERAL ===== -->
+<aside class="sidebar" [class.open]="menuOpen()">
+  <!-- #busca cria uma referência ao input; a cada tecla atualizamos o signal "search" -->
+  <div class="search">
+    <span>⌕</span>
+    <input #busca placeholder="Buscar endpoint..." (input)="search.set(busca.value)" />
+  </div>
+
+  <button class="nav-block" [class.active]="selectedId() === 'home'" (click)="select('home')">
+    <span class="icon">🏠︎</span> Home
+  </button>
+
+  <!-- Grupo sanfonado: clicar no título abre/fecha a lista -->
+  <div class="nav-group">
+    <button class="nav-block group-title" (click)="groupOpen.set(!groupOpen())">
+      <span class="icon">𖨆</span>
+      <span class="grow">Usuários</span>
+      <span>{{ groupOpen() ? '⌃' : '⌄' }}</span>
+    </button>
+
+    <!-- Durante uma busca o grupo fica sempre aberto -->
+    @if (groupOpen() || search()) {
+      @for (endpoint of filtered(); track endpoint.id) {
+        <button class="nav-item" [class.active]="selectedId() === endpoint.id" (click)="select(endpoint.id)">
+          <span class="mini-method">{{ endpoint.method }}</span>
+          {{ endpoint.title }}
+        </button>
+      } @empty {
+        <p class="empty">Nenhum endpoint encontrado.</p>
+      }
+    }
+  </div>
+</aside>
+
+<!-- ===== CONTEÚDO ===== -->
+<main class="content">
+  <section class="card">
+    @if (selected(); as endpoint) {
+
+      <!-- ---------- PÁGINA DE UM ENDPOINT ---------- -->
+      <p class="breadcrumb">DOCUMENTAÇÃO <span>/</span> USUÁRIOS <span>/</span> {{ endpoint.title.toUpperCase() }}</p>
+
+      <div class="title-row">
+        <span class="method" [attr.data-method]="endpoint.method">{{ endpoint.method }}</span>
+        <h1>{{ endpoint.title }}</h1>
+      </div>
+      <p class="lead">{{ endpoint.description }}</p>
+
+      <!-- Método + caminho -->
+      <div class="path-bar">
+        <span class="method" [attr.data-method]="endpoint.method">{{ endpoint.method }}</span>
+        <code>/modularizacao{{ endpoint.path }}</code>
+        <button (click)="copy(apiBaseUrl + endpoint.path, 'path')">
+          {{ copied() === 'path' ? 'Copiado!' : 'Copiar rota' }}
+        </button>
+      </div>
+
+      <!-- Observações (só aparece se existir) -->
+      @if (endpoint.notes?.length) {
+        <div class="notes">
+          <h2>Regras e observações</h2>
+          <ul>
+            @for (note of endpoint.notes; track note) {
+              <li>{{ note }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Parâmetros, query string e body. $index é a posição no for (0, 1, 2...) -->
+      @for (section of fieldSections(endpoint); track section.title) {
+        <small class="section-label">0{{ $index + 1 }}</small>
+        <h2>{{ section.title }}</h2>
+        @for (field of section.fields; track field.name) {
+          <div class="field-row">
+            <div>
+              <code>{{ field.name }}</code>
+              @if (field.required) { <span class="required">obrigatório</span> }
+            </div>
+            <span class="field-type">{{ field.type }}</span>
+            <p>{{ field.rules }}</p>
+          </div>
+        }
+      }
+
+      <!-- Exemplo de requisição -->
+      <small class="section-label">EXEMPLO</small>
+      <h2>Faça uma requisição</h2>
+      <div class="code-card dark">
+        <div class="code-head">
+          <!-- #fmt guarda a referência do select; (change) roda quando o usuário troca a opção -->
+          <select #fmt (change)="setFormat(fmt.value)">
+            <option value="http" [selected]="format() === 'http'">HTTP</option>
+            <option value="curl" [selected]="format() === 'curl'">cURL</option>
+          </select>
+          <button (click)="copy(example(endpoint), 'example')">
+            {{ copied() === 'example' ? 'Copiado!' : 'Copiar' }}
+          </button>
+        </div>
+        <pre>{{ example(endpoint) }}</pre>
+      </div>
+
+      <!-- Resposta de sucesso -->
+      <small class="section-label">RESPOSTA</small>
+      <h2>Resposta de sucesso</h2>
+      <div class="code-card">
+        <div class="code-head">
+          <span><span class="status ok">{{ endpoint.success.status }}</span> {{ endpoint.success.title }}</span>
+          <button (click)="copy(endpoint.success.body, 'success')">
+            {{ copied() === 'success' ? 'Copiado!' : 'Copiar' }}
+          </button>
+        </div>
+        <pre>{{ endpoint.success.body }}</pre>
+      </div>
+
+      <!-- Respostas de erro: <details> abre e fecha sozinho, sem código TypeScript -->
+      <small class="section-label">ERROS</small>
+      <h2>Possíveis respostas de erro</h2>
+      @for (error of sortedErrors(endpoint); track $index) {
+        <details class="code-card">
+          <summary>
+            <span class="status error">{{ error.status }}</span> {{ error.title }}
+          </summary>
+          <pre>{{ error.body }}</pre>
+        </details>
+      }
+
+    } @else {
+
+      <!-- ---------- PÁGINA INICIAL (HOME) ---------- -->
+      <p class="breadcrumb">DOCUMENTAÇÃO OFICIAL</p>
+      <h1>API de Usuários — Modularização</h1>
+      <p class="lead">
+        API REST em Node.js, Express e MySQL para cadastrar, consultar, pesquisar,
+        atualizar e excluir usuários. Escolha um endpoint no menu para ver os detalhes.
+      </p>
+
+      <div class="path-bar">
+        <small>BASE URL</small>
+        <code>{{ apiBaseUrl }}</code>
+        <button (click)="copy(apiBaseUrl, 'base')">{{ copied() === 'base' ? 'Copiado!' : 'Copiar' }}</button>
+      </div>
+
+      <small class="section-label">01</small>
+      <h2>Endpoints</h2>
+      <div class="endpoint-list">
+        @for (endpoint of endpoints; track endpoint.id) {
+          <button class="endpoint-row" (click)="select(endpoint.id)">
+            <span class="method" [attr.data-method]="endpoint.method">{{ endpoint.method }}</span>
+            <strong>{{ endpoint.title }}</strong>
+            <code>{{ endpoint.path }}</code>
+            <span class="arrow">›</span>
+          </button>
+        }
+      </div>
+
+      <small class="section-label">02</small>
+      <h2>Status HTTP utilizados</h2>
+      <div class="field-row"><div><span class="status ok">200</span></div><span class="field-type">OK</span><p>Consulta, atualização ou exclusão realizada com sucesso.</p></div>
+      <div class="field-row"><div><span class="status ok">201</span></div><span class="field-type">Created</span><p>Usuário criado com sucesso.</p></div>
+      <div class="field-row"><div><span class="status error">400</span></div><span class="field-type">Bad Request</span><p>Dados ou parâmetros inválidos.</p></div>
+      <div class="field-row"><div><span class="status error">404</span></div><span class="field-type">Not Found</span><p>Usuário, registro ou página não encontrada.</p></div>
+      <div class="field-row"><div><span class="status error">409</span></div><span class="field-type">Conflict</span><p>E-mail ou telefone já utilizado.</p></div>
+      <div class="field-row"><div><span class="status error">500</span></div><span class="field-type">Internal Server Error</span><p>Erro inesperado no servidor.</p></div>
+
+      <small class="section-label">03</small>
+      <h2>Formato dos erros de validação</h2>
+      <p class="lead">
+        Quando uma regra falha, o express-validator interrompe a requisição antes do controller
+        e a API responde 400 com a lista <code>errors</code>:
+      </p>
+      <div class="code-card dark">
+        <pre>{{ validationExample }}</pre>
+      </div>
+    }
+  </section>
+</main>
+
+<!-- Fundo escuro atrás do menu no celular; clicar nele fecha o menu -->
+@if (menuOpen()) {
+  <div class="backdrop" (click)="menuOpen.set(false)"></div>
+}
